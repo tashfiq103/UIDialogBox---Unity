@@ -2,8 +2,8 @@
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" PreferredExecutionTarget="Unity.Instance.Unity Editor" />
   <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Scripts\UserInterface\UIDialogBox.cs">
     <Files>
-      <File FileName="Assets\Scripts\UserInterface\UIDialogBoxTestInterface.cs" Line="9" Column="15" />
-      <File FileName="Assets\Scripts\UserInterface\UIDialogBox.cs" Line="277" Column="2" />
+      <File FileName="Assets\Scripts\UserInterface\UIDialogBox.cs" Line="32" Column="39" />
+      <File FileName="Assets\_Tutorial\DialogBoxTest.cs" Line="29" Column="5" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>

@@ -28,12 +28,12 @@ public class UIDialogBox : MonoBehaviour {
 	}
 	//-----------------------------------------------
 
+	#if UNITY_ANDROID || UNITY_IOS
+	public bool hasDifferentScreenOrientation;
+	#endif
+
 	[Header("DialogBox Theme (Optional)")]
 	[Tooltip("If the current scene have both portrait & landscape mode for UI/Gameplay")]
-
-	#if UNITY_ANDROID || UNITY_IOS
-		public bool hasDifferentScreenOrientation;
-	#endif
 
 	[Header("----------------------")]
 	public Sprite 	dialogBoxBackground;
@@ -360,7 +360,7 @@ public class UIDialogBox : MonoBehaviour {
 			dialogBox2BReference.GetComponent<RectTransform> ().sizeDelta = newSize;
 		}else {
 
-			Vector2 newSize = new Vector2 ( 	Screen.width/2, (Screen.height*1)/5);
+			Vector2 newSize = new Vector2 ( 	Screen.width/1.5f, (Screen.height*1)/4.5f);
 			dialogBox2BReference.GetComponent<RectTransform> ().sizeDelta = newSize;
 		}
 	}
@@ -375,7 +375,7 @@ public class UIDialogBox : MonoBehaviour {
 			dialogBox3BReference.GetComponent<RectTransform> ().sizeDelta = newSize;
 		}else {
 
-			Vector2 newSize = new Vector2 ( (Screen.width*3)/5, (Screen.height*1)/4);
+			Vector2 newSize = new Vector2 ( (Screen.width*3.5f)/5, (Screen.height*1)/4);
 			dialogBox3BReference.GetComponent<RectTransform> ().sizeDelta = newSize;
 		}
 	}
