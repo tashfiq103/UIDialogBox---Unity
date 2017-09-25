@@ -6,7 +6,7 @@ using UnityEngine.Events;
 
 public class UIDialogBox : MonoBehaviour {
 
-	public static UIDialogBox instance;
+	public static UIDialogBox Instance;
 
 	#region PUBLIC VARIABLES
 
@@ -29,16 +29,28 @@ public class UIDialogBox : MonoBehaviour {
 	//-----------------------------------------------
 
 	[Header("DialogBox Theme (Optional)")]
+	[Tooltip("If the current scene have both portrait & landscape mode for UI/Gameplay")]
+
+	#if UNITY_ANDROID || UNITY_IOS
+		public bool hasDifferentScreenOrientation;
+	#endif
+
+	[Header("----------------------")]
 	public Sprite 	dialogBoxBackground;
 	public Sprite 	buttonBackground;
 	public Font 	dialogBoxFont;
 
+	[Space]
 	[Header("----------------------")]
 	public UIDialogInformation[] dialogBox;
+	[Header("----------------------")]
+	[Space]
 
 	//-----------------------------------------------
 
-	[Header("DO NOT CHANGE!!!")]
+	
+	[Header("Settings (Don't Change Anything)!!!")]
+	[Header("----------------------")]
 	public GameObject glassEffectBackground;
 	[Header("----------------------")]
 	[Header("Dialog Box - 2 Button : Component")]
@@ -61,50 +73,91 @@ public class UIDialogBox : MonoBehaviour {
 
 	#region PRIVATE VARIABLES
 
-	float _widthRatio;
-	float _heightRatio;
+	private Vector2 mAspectRatio;
+
+	#if UNITY_ANDROID || UNITY_IOS
+	private DeviceOrientation mCurrentDeviceOrientation;
+	#endif
 
 	#endregion
 
 	void Awake(){
 
-		if (instance == null)
-			instance = this;
+		Instance = this;
 
 	}
 
 	void Start(){
 
-		_ChangeTheme ();
+		#if UNITY_ANDROID || UNITY_IOS
 
-		_widthRatio = Camera.main.pixelHeight / Camera.main.pixelWidth;
-		_heightRatio = Camera.main.pixelWidth / Camera.main.pixelWidth;
+		switch (Input.deviceOrientation) {
+
+		case DeviceOrientation.LandscapeLeft:
+			mCurrentDeviceOrientation = DeviceOrientation.LandscapeLeft;
+			break;
+		case DeviceOrientation.LandscapeRight:
+			mCurrentDeviceOrientation = DeviceOrientation.LandscapeRight;
+			break;
+		case DeviceOrientation.Portrait:
+			mCurrentDeviceOrientation = DeviceOrientation.Portrait;
+			break;
+		case DeviceOrientation.PortraitUpsideDown:
+			mCurrentDeviceOrientation = DeviceOrientation.PortraitUpsideDown;
+			break;
+		}
+
+		#endif
+
+		mAspectRatio = GetAspectRatio (Screen.width, Screen.height);
+
+		mChangeTheme ();
 
 		dialogBox2BReference.SetActive (false);
 		dialogBox3BReference.SetActive (false);
 	}
 
+	void Update(){
 
+		#if UNITY_ANDROID || UNITY_IOS
 
-	#region PUBLIC METHOD CALL
+		if (hasDifferentScreenOrientation) {
 
+			if (Input.deviceOrientation != mCurrentDeviceOrientation) {
 
-	public void CallDialogBox(string nameOfDialogBox){
+				StartCoroutine(mAdaptNewScreenChange());
+			}
+		}
+
+		#endif
+	}
+
+	#region PUBLIC METHOD
+
+	public Vector2 GetAspectRatio(int x, int y){
+		float f = (float)x / (float)y;
+		int i = 0;
+		while(true){
+			i++;
+			if(System.Math.Round(f * i, 2) == Mathf.RoundToInt(f * i))
+				break;
+		}
+		return new Vector2((float)System.Math.Round(f * i, 2), i);
+	}
+
+	public void CreatePresetDialogBox(string nameOfDialogBox){
 
 		for (int i = 0; i < dialogBox.Length; i++) {
 
 			if (dialogBox [i].nameOfDialogBox == nameOfDialogBox) {
 
-				_onCreateDialogBox ();
+				mOnCreateDialogBox ();
 
 				if (dialogBox [i].hasCancelButton) {
-				
-					if (Camera.main.aspect >= 1.0f) {
-						Rect _size = dialogBox2BReference.GetComponent<RectTransform> ().rect;
-						dialogBox2BReference.GetComponent<RectTransform> ().sizeDelta = new Vector2 (_size.width * _widthRatio, _size.height * _heightRatio);
-					}
 
-					UnityAction _ResetAction = new UnityAction (_Reset3BDialogBox);
+					mChange3BDialogBoxSize ();
+
+					UnityAction _ResetAction = new UnityAction (mReset3BDialogBox);
 
 					header3BTextReference.text = dialogBox [i].header;
 					messege3BBodyTextReference.text = dialogBox [i].messegeBody;
@@ -125,12 +178,9 @@ public class UIDialogBox : MonoBehaviour {
 
 				} else {
 
+					mChange2BDialogBoxSize ();
 
-					if (Camera.main.aspect >= 1.0f) {
-						Rect _size = dialogBox3BReference.GetComponent<RectTransform> ().rect;
-						dialogBox3BReference.GetComponent<RectTransform> ().sizeDelta = new Vector2 (_size.width * _widthRatio, _size.height * _heightRatio);
-					}
-					UnityAction _ResetAction = new UnityAction (_Reset2BDialogBox);
+					UnityAction _ResetAction = new UnityAction (mReset2BDialogBox);
 
 					header2BTextReference.text = dialogBox [i].header;
 					messege2BBodyTextReference.text = dialogBox [i].messegeBody;
@@ -154,13 +204,10 @@ public class UIDialogBox : MonoBehaviour {
 	}
 
 	public void CreateCustomDialogBox2B(string _title, string _description,string _option1,UnityAction _option1Action,string _option2,UnityAction _option2Action){
+		
+		mChange2BDialogBoxSize ();
 
-		if (Camera.main.aspect >= 1.0f) {
-			Rect _size = dialogBox2BReference.GetComponent<RectTransform> ().rect;
-			dialogBox2BReference.GetComponent<RectTransform> ().sizeDelta = new Vector2 (_size.width * _widthRatio, _size.height * _heightRatio);
-		}
-
-		UnityAction _ResetAction = new UnityAction (_Reset2BDialogBox);
+		UnityAction _ResetAction = new UnityAction (mReset2BDialogBox);
 
 		header2BTextReference.text = _title;
 		messege2BBodyTextReference.text = _description;
@@ -180,14 +227,11 @@ public class UIDialogBox : MonoBehaviour {
 		dialogBox2BReference.SetActive (true);
 	}
 
-	public void CreateCustomDialogBox3B(string _title, string _description,string _option1,UnityAction _option1Action,string _option2,UnityAction _option2Action){
+	public void CreateCustomDialogBox3B(string _title, string _description,string _option1,UnityAction _option1Action,string _option2,UnityAction _option2Action,string _cancel){
 
-		if (Camera.main.aspect >= 1.0f) {
-			Rect _size = dialogBox3BReference.GetComponent<RectTransform> ().rect;
-			dialogBox3BReference.GetComponent<RectTransform> ().sizeDelta = new Vector2 (_size.width * _widthRatio, _size.height * _heightRatio);
-		}
+		mChange3BDialogBoxSize ();
 
-		UnityAction _ResetAction = new UnityAction (_Reset3BDialogBox);
+		UnityAction _ResetAction = new UnityAction (mReset3BDialogBox);
 
 		header3BTextReference.text = _title;
 		messege3BBodyTextReference.text = _description;
@@ -203,6 +247,9 @@ public class UIDialogBox : MonoBehaviour {
 		if(_option2Action != null)
 			option2ButtonReference.onClick.AddListener (_option1Action);
 		
+		if (_cancel == null || _cancel.Length == 0)
+			_cancel = "Cancel";
+		cancelButtonReference.GetComponentInChildren<Text> ().text = _cancel;
 		cancelButtonReference.onClick.AddListener (_ResetAction);
 
 		glassEffectBackground.SetActive (true);
@@ -212,9 +259,23 @@ public class UIDialogBox : MonoBehaviour {
 
 	#endregion
 
-	#region PRIVATE VARIABLES
+	#region PRIVATE METHOD
 
-	private void _ChangeTheme(){
+	#if UNITY_ANDROID || UNITY_IOS
+
+	private IEnumerator mAdaptNewScreenChange(){
+
+		yield return new WaitForSeconds (0.5f);
+
+		mCurrentDeviceOrientation = Input.deviceOrientation;
+
+		mChange2BDialogBoxSize ();
+		mChange3BDialogBoxSize ();
+	}
+
+	#endif
+
+	private void mChangeTheme(){
 
 		if (dialogBoxBackground != null) {
 
@@ -246,7 +307,16 @@ public class UIDialogBox : MonoBehaviour {
 		}
 	}
 
-	private void _Reset2BDialogBox(){
+	private void mOnCreateDialogBox(){
+
+		if (dialogBox2BReference.activeInHierarchy)
+			dialogBox2BReference.SetActive (false);
+
+		if (dialogBox3BReference.activeInHierarchy)
+			dialogBox3BReference.SetActive (false);
+	}
+
+	private void mReset2BDialogBox(){
 
 		header2BTextReference.text = "";
 		messege2BBodyTextReference.text = "";
@@ -262,7 +332,7 @@ public class UIDialogBox : MonoBehaviour {
 		glassEffectBackground.SetActive (false);
 	}
 
-	private void _Reset3BDialogBox(){
+	private void mReset3BDialogBox(){
 
 		header3BTextReference.text = "";
 		messege3BBodyTextReference.text = "";
@@ -280,14 +350,36 @@ public class UIDialogBox : MonoBehaviour {
 		glassEffectBackground.SetActive (false);
 	}
 
-	private void _onCreateDialogBox(){
+	private void mChange2BDialogBoxSize(){
+	
+		mAspectRatio = GetAspectRatio (Screen.width, Screen.height);
 
-		if (dialogBox2BReference.activeInHierarchy)
-			dialogBox2BReference.SetActive (false);
+		if (mAspectRatio.x > mAspectRatio.y) {
 
-		if (dialogBox3BReference.activeInHierarchy)
-			dialogBox3BReference.SetActive (false);
+			Vector2 newSize = new Vector2 ( (Screen.width*1)/3, (Screen.height*1)/3);
+			dialogBox2BReference.GetComponent<RectTransform> ().sizeDelta = newSize;
+		}else {
+
+			Vector2 newSize = new Vector2 ( 	Screen.width/2, (Screen.height*1)/5);
+			dialogBox2BReference.GetComponent<RectTransform> ().sizeDelta = newSize;
+		}
+	}
+
+	private void mChange3BDialogBoxSize(){
+	
+		mAspectRatio = GetAspectRatio (Screen.width, Screen.height);
+
+		if (mAspectRatio.x > mAspectRatio.y) {
+
+			Vector2 newSize = new Vector2 ( (Screen.width*1)/3, (Screen.height*1)/2.5f);
+			dialogBox3BReference.GetComponent<RectTransform> ().sizeDelta = newSize;
+		}else {
+
+			Vector2 newSize = new Vector2 ( (Screen.width*3)/5, (Screen.height*1)/4);
+			dialogBox3BReference.GetComponent<RectTransform> ().sizeDelta = newSize;
+		}
 	}
 
 	#endregion
+
 }

@@ -1,4 +1,4 @@
 sceneSetups:
-- path: Assets/_Scene/UIDialogbox - Test Scene.unity
+- path: Assets/Prefab/UserInterface/UIDialogBox/Demo/UIDialogbox - Test Scene.unity
   isLoaded: 1
   isActive: 1
